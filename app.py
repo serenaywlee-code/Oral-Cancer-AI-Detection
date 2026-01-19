@@ -68,3 +68,10 @@ if uploaded_file is not None:
         "This result is **not a diagnosis**. "
         "If you have concerns, consult a qualified healthcare professional."
     )
+import tensorflow as tf
+
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model("oral_cancer_model.keras")
+
+model = load_model()
