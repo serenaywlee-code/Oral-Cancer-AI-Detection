@@ -1,135 +1,96 @@
 import streamlit as st
-import tensorflow as tf
-import numpy as np
 from PIL import Image
+import numpy as np
+import tensorflow as tf
+import tflite_runtime.interpreter as tflite
+import io
 
-# ----------------------------
-# PAGE CONFIG
-# ----------------------------
+# ------------------ PAGE CONFIG ------------------
 st.set_page_config(
     page_title="Oral Cancer AI Detection",
-    page_icon="🦷",
-    layout="centered"
+    page_icon="🦷",  # replace with "teeth_icon.png" if you have your icon
+    layout="centered",
+    initial_sidebar_state="auto"
 )
 
-# ----------------------------
-# CUSTOM CSS (DESIGN)
-# ----------------------------
+# ------------------ CUSTOM CSS ------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-    html, body, [class*="css"]  {
-        font-family: 'Inter', 'Google Sans', 'Arial', sans-serif;
+    @import url('https://fonts.googleapis.com/css2?family=Gemini&display=swap');
+    
+    body {
         background-color: white;
-    }
-
-    h1, h2, h3 {
         color: #3275a8;
+        font-family: 'Gemini', sans-serif;
     }
-
-    p, label, span {
-        color: #3275a8;
-        font-size: 16px;
-    }
-
-    .stButton > button {
+    .stButton>button {
         background-color: #3275a8;
         color: white;
         border-radius: 8px;
-        padding: 0.5rem 1rem;
-        border: none;
-        font-weight: 500;
+        padding: 0.5em 1.2em;
     }
-
-    .stFileUploader {
-        border: 1px dashed #3275a8;
-        border-radius: 8px;
-        padding: 1rem;
+    .stApp {
+        max-width: 700px;
+        margin: auto;
+        padding: 2rem;
     }
-
+    h1, h2 {
+        color: #3275a8;
+    }
+    .upload-box {
+        border: 2px dashed #3275a8;
+        padding: 2rem;
+        border-radius: 12px;
+        text-align: center;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# ----------------------------
-# HEADER
-# ----------------------------
-st.markdown("## 🦷 Oral Cancer AI Detection")
-st.markdown(
-    "Upload an image of the oral cavity to receive an **AI-based screening result**. "
-    "This tool is for **educational purposes only** and does not replace professional diagnosis."
-)
+# ------------------ HEADER ------------------
+st.title("🦷 Oral Cancer AI Detection")
+st.markdown("Upload a mouth image below and our AI will indicate if there may be signs of oral cancer.")
+st.markdown("**Note:** This is not an official diagnosis. Please consult a dentist or doctor for medical advice.")
 
-st.divider()
-
-# ----------------------------
-# LOAD TFLITE MODEL
-# ----------------------------
-@st.cache_resource
-def load_tflite_model():
-    interpreter = tf.lite.Interpreter(model_path="oral_cancer_model.tflite")
+# ------------------ MODEL LOADING ------------------
+@st.cache_resource(show_spinner=True)
+def load_model():
+    # Load TFLite model
+    interpreter = tflite.Interpreter(model_path="oral_cancer_model.tflite")
     interpreter.allocate_tensors()
     return interpreter
 
-interpreter = load_tflite_model()
+interpreter = load_model()
+
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# ----------------------------
-# IMAGE PREPROCESSING + PREDICTION
-# ----------------------------
-def predict_image(image: Image.Image):
-    image = image.convert("RGB")
-    image = image.resize((224, 224))
-    image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0).astype(np.float32)
+# ------------------ IMAGE UPLOAD ------------------
+uploaded_file = st.file_uploader("Choose a mouth image...", type=["jpg", "jpeg", "png"])
 
-    interpreter.set_tensor(input_details[0]["index"], image)
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+    
+    # Preprocess image for TFLite model
+    img_resized = image.resize((224, 224))  # adjust based on your model input
+    img_array = np.array(img_resized, dtype=np.float32) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+
+    # Run inference
+    interpreter.set_tensor(input_details[0]['index'], img_array)
     interpreter.invoke()
-    prediction = interpreter.get_tensor(output_details[0]["index"])
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    prediction = np.argmax(output_data)
 
-    return float(prediction[0][0])
+    # Display result
+    if prediction == 1:
+        st.error("⚠️ The AI indicates this image may show signs of oral cancer.")
+    else:
+        st.success("✅ The AI indicates this image appears normal.")
 
-# ----------------------------
-# FILE UPLOAD
-# ----------------------------
-uploaded_file = st.file_uploader(
-    "Upload an oral cavity image (JPG or PNG)",
-    type=["jpg", "jpeg", "png"]
-)
-
-if uploaded_file:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
-
-    if st.button("Analyze Image"):
-        with st.spinner("Analyzing image..."):
-            confidence = predict_image(image)
-
-        st.divider()
-
-        if confidence >= 0.5:
-            st.error(
-                f"⚠️ **Potential abnormality detected**\n\n"
-                f"Confidence: **{confidence*100:.1f}%**"
-            )
-        else:
-            st.success(
-                f"✅ **Appears normal**\n\n"
-                f"Confidence: **{(1-confidence)*100:.1f}%**"
-            )
-
-# ----------------------------
-# FOOTER / DISCLAIMER
-# ----------------------------
-st.divider()
-st.markdown(
-    """
-    **Disclaimer:**  
-    This application is a **student research project** and is **not a medical device**.  
-    Results should **not** be used for diagnosis or treatment decisions.
-    """
-)
+# ------------------ FOOTER ------------------
+st.markdown("---")
+st.markdown("Created with ❤️ using Streamlit and TensorFlow Lite")
