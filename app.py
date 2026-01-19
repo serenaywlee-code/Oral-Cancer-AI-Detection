@@ -2,13 +2,12 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 import tensorflow as tf
-import tflite_runtime.interpreter as tflite
 import io
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(
     page_title="Oral Cancer AI Detection",
-    page_icon="🦷",  # replace with "teeth_icon.png" if you have your icon
+    page_icon="🦷",
     layout="centered",
     initial_sidebar_state="auto"
 )
@@ -57,13 +56,12 @@ st.markdown("**Note:** This is not an official diagnosis. Please consult a denti
 # ------------------ MODEL LOADING ------------------
 @st.cache_resource(show_spinner=True)
 def load_model():
-    # Load TFLite model
-    interpreter = tflite.Interpreter(model_path="oral_cancer_model.tflite")
+    # Load TFLite model using TensorFlow Lite interpreter (works without tflite_runtime)
+    interpreter = tf.lite.Interpreter(model_path="oral_cancer_model.tflite")
     interpreter.allocate_tensors()
     return interpreter
 
 interpreter = load_model()
-
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
@@ -75,7 +73,7 @@ if uploaded_file is not None:
     st.image(image, caption="Uploaded Image", use_column_width=True)
     
     # Preprocess image for TFLite model
-    img_resized = image.resize((224, 224))  # adjust based on your model input
+    img_resized = image.resize((224, 224))  # adjust to your model input size
     img_array = np.array(img_resized, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
