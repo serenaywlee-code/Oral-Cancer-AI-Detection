@@ -19,8 +19,8 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Gemini&display=swap');
     
     body {
-        background-color: white;
-        color: #3275a8;
+        background-color: #d0e7ff; /* light blue background */
+        color: #3275a8; /* main text color */
         font-family: 'Gemini', sans-serif;
     }
     .stButton>button {
@@ -42,6 +42,7 @@ st.markdown(
         padding: 2rem;
         border-radius: 12px;
         text-align: center;
+        background-color: white; /* make upload box stand out */
     }
     </style>
     """,
