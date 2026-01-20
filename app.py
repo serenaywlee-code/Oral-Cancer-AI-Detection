@@ -13,48 +13,63 @@ st.set_page_config(
 # ---------------- STYLING ----------------
 st.markdown("""
 <style>
-body {
-    background-color: #eaf4fb;
+/* Entire page background */
+html, body, .main {
+    background-color: #e6f2fb;
 }
-.main {
-    background-color: #eaf4fb;
-}
+
+/* Title */
 .title {
     font-size: 40px;
     font-weight: 700;
     color: #3275a8;
     text-align: center;
+    margin-bottom: 8px;
 }
+
+/* Subtitle */
 .subtitle {
     text-align: center;
-    font-size: 17px;
+    font-size: 16px;
     color: #4a4a4a;
+    margin-bottom: 30px;
 }
+
+/* White card */
 .card {
     background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
-    margin-top: 30px;
+    padding: 32px;
+    border-radius: 22px;
+    box-shadow: 0px 8px 22px rgba(0,0,0,0.08);
 }
+
+/* Normal result */
 .result-normal {
-    background: #ecfdf5;
+    background: #f0fdf4;
     border-left: 6px solid #22c55e;
-    padding: 20px;
+    padding: 18px;
     border-radius: 12px;
+    color: #14532d;
 }
+
+/* Abnormal result */
 .result-abnormal {
     background: #fff7ed;
     border-left: 6px solid #f59e0b;
-    padding: 20px;
+    padding: 18px;
     border-radius: 12px;
+    color: #7c2d12;
 }
+
+/* Disclaimer */
 .disclaimer {
-    background: #fef2f2;
-    border-left: 6px solid #ef4444;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 30px;
+    background: rgba(254, 202, 202, 0.45);
+    border-left: 6px solid #dc2626;
+    padding: 18px;
+    border-radius: 14px;
+    margin-top: 28px;
+    color: #b91c1c;
+    font-size: 15px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -71,10 +86,13 @@ This tool is for educational purposes only and does not replace professional dia
 # ---------------- MODEL LOADING ----------------
 @st.cache_resource
 def load_model():
-    return tf.lite.Interpreter(model_path="oral_cancer_model_optimized.tflite")
+    interpreter = tf.lite.Interpreter(
+        model_path="oral_cancer_model_optimized.tflite"
+    )
+    interpreter.allocate_tensors()
+    return interpreter
 
 interpreter = load_model()
-interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
@@ -82,13 +100,13 @@ output_details = interpreter.get_output_details()
 def preprocess_image(image):
     image = image.convert("RGB")
     image = image.resize((224, 224))
-    img_array = np.array(image) / 255.0
-    img_array = np.expand_dims(img_array, axis=0).astype(np.float32)
-    return img_array
+    img = np.array(image) / 255.0
+    img = np.expand_dims(img, axis=0).astype(np.float32)
+    return img
 
 # ---------------- UPLOAD CARD ----------------
 st.markdown("<div class='card'>", unsafe_allow_html=True)
-st.markdown("### Upload an oral cavity image (JPG or PNG)")
+st.markdown("### Upload an oral cavity image (JPG or PNG)", unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
     "",
@@ -98,7 +116,7 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, caption="Uploaded image", use_container_width=True)
 
     with st.spinner("Analyzing image..."):
         processed = preprocess_image(image)
@@ -110,14 +128,14 @@ if uploaded_file:
     if prediction > 0.5:
         st.markdown("""
         <div class='result-abnormal'>
-        <h3>⚠️ Abnormality Detected</h3>
+        <h4>⚠️ Abnormality Detected</h4>
         The AI has detected potential abnormalities. Please consult a healthcare professional immediately.
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown("""
         <div class='result-normal'>
-        <h3>✅ Normal Result</h3>
+        <h4>✅ Normal Result</h4>
         No abnormalities detected. Please consult a professional for confirmation.
         </div>
         """, unsafe_allow_html=True)
@@ -129,7 +147,7 @@ st.markdown("</div>", unsafe_allow_html=True)
 # ---------------- DISCLAIMER ----------------
 st.markdown("""
 <div class='disclaimer'>
-<h4>Disclaimer</h4>
+<strong>Disclaimer</strong><br>
 • This application is a student research project and is not a medical device.<br>
 • Results must not be used for diagnosis or treatment decisions.
 </div>
