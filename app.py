@@ -18,7 +18,6 @@ interpreter = load_model()
 # Prediction function
 # --------------------------
 def predict(image: Image.Image):
-    # Resize to model input
     img = image.resize((224, 224))
     img_array = np.array(img, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
@@ -41,13 +40,8 @@ st.set_page_config(page_title="Oral Cancer AI Detection", layout="centered", pag
 
 st.markdown("""
 <style>
-/* Full-screen light blue background */
-html, body, .block-container, .main, .reportview-container {
-    background-color: #dff0fb !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-}
+/* Full-page light blue background without breaking scroll */
+.css-1d391kg {background-color: #dff0fb !important;}
 
 /* Title */
 .title {
