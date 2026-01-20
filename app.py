@@ -24,7 +24,7 @@ body, .block-container, .main {
     font-weight: 700;
     color: #3275a8;
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
 }
 
 /* Subtitle */
