@@ -35,15 +35,6 @@ body, .block-container, .main {
     margin-bottom: 36px;
 }
 
-/* Main white card for uploader + results only */
-.card {
-    background: white;
-    padding: 36px;
-    border-radius: 26px;
-    box-shadow: 0px 12px 30px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
-}
-
 /* Results */
 .normal {
     background: #f0fdf4;
