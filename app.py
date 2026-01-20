@@ -36,12 +36,18 @@ def predict(image: Image.Image):
 # --------------------------
 # Page layout + CSS
 # --------------------------
-st.set_page_config(page_title="Oral Cancer AI Detection", layout="centered", page_icon="🦷")
+st.set_page_config(page_title="Oral Cancer AI Detection", layout="wide", page_icon="🦷")
 
 st.markdown("""
 <style>
-/* Full-page light blue background without breaking scroll */
-.css-1d391kg {background-color: #dff0fb !important;}
+/* Full-screen light blue background */
+[data-testid="stAppViewContainer"] > .main {
+    background-color: #dff0fb;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.css-1lcbmhc {padding: 0 !important;} /* remove side padding so background fills full width */
 
 /* Title */
 .title {
@@ -66,7 +72,9 @@ st.markdown("""
     padding: 36px;
     border-radius: 26px;
     box-shadow: 0px 12px 30px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 600px;
 }
 
 /* Results */
@@ -104,6 +112,9 @@ st.markdown("""
     color: #b91c1c;
     font-size: 15px;
     margin-top: 32px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 </style>
 """, unsafe_allow_html=True)
