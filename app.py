@@ -21,7 +21,7 @@ body, .block-container, .main {
 /* Title */
 .title {
     font-size: 40px;
-    font-weight: 500;
+    font-weight: 700;
     color: #3275a8;
     text-align: center;
     margin-bottom: 5px;
@@ -81,6 +81,7 @@ st.markdown("""
 Upload an image of the oral cavity to receive an AI-based screening result.<br>
 This tool is for educational purposes only and does not replace professional diagnosis.
 </div>
+color: #3275a8;
 """, unsafe_allow_html=True)
 
 # ---------------- MODEL ----------------
