@@ -14,7 +14,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 html, body, .main {
-    background-color: #dff0fb !important;
+    background-color: #dff0fb !important;  /* Light blue background */
 }
 
 .block-container {
@@ -38,12 +38,13 @@ html, body, .main {
     margin-bottom: 36px;
 }
 
-/* Main white card */
+/* Main white card for upload + results ONLY */
 .card {
     background: white;
     padding: 36px;
     border-radius: 26px;
     box-shadow: 0px 12px 30px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
 }
 
 /* Results */
@@ -112,7 +113,7 @@ def preprocess(img):
     arr = np.array(img) / 255.0
     return np.expand_dims(arr, axis=0).astype(np.float32)
 
-# ---------------- MAIN CARD (ONLY ONE) ----------------
+# ---------------- UPLOAD + RESULTS CARD ----------------
 st.markdown("<div class='card'>", unsafe_allow_html=True)
 
 st.markdown("### Upload an oral cavity image (JPG or PNG)")
