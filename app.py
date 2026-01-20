@@ -1,52 +1,21 @@
 import streamlit as st
-from PIL import Image
 import numpy as np
+from PIL import Image
 import tensorflow as tf
 
-# --------------------------
-# Load TFLite model
-# --------------------------
-@st.cache_resource
-def load_model():
-    interpreter = tf.lite.Interpreter(model_path="oral_cancer_model_optimized.tflite")
-    interpreter.allocate_tensors()
-    return interpreter
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Oral Cancer AI Detection",
+    page_icon="🦷",
+    layout="centered"
+)
 
-interpreter = load_model()
-
-# --------------------------
-# Prediction function
-# --------------------------
-def predict(image: Image.Image):
-    # Resize to model input
-    img = image.resize((224, 224))
-    img_array = np.array(img, dtype=np.float32) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)
-
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    
-    interpreter.set_tensor(input_details[0]['index'], img_array)
-    interpreter.invoke()
-    
-    output_data = interpreter.get_tensor(output_details[0]['index'])
-    confidence = float(output_data[0][0])
-    prediction = 'Abnormal' if confidence > 0.5 else 'Normal'
-    return prediction, confidence
-
-# --------------------------
-# Page layout + CSS
-# --------------------------
-st.set_page_config(page_title="Oral Cancer AI Detection", layout="centered", page_icon="🦷")
-
+# ---------------- STYLES ----------------
 st.markdown("""
 <style>
-/* Full-screen light blue background */
-html, body, .block-container, .main, .reportview-container {
-    background-color: #dff0fb !important;
-    height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+/* Page background */
+body, .block-container, .main {
+    background-color: #dff0fb !important;  /* Light blue background */
 }
 
 /* Title */
@@ -94,7 +63,7 @@ html, body, .block-container, .main, .reportview-container {
     margin-top: 16px;
 }
 
-/* Confidence score */
+/* Risk score */
 .score {
     margin-top: 14px;
     font-weight: 600;
@@ -114,41 +83,90 @@ html, body, .block-container, .main, .reportview-container {
 </style>
 """, unsafe_allow_html=True)
 
-# --------------------------
-# Page content
-# --------------------------
-st.markdown('<div class="title">🦷 Oral Cancer AI Detection</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Upload an image of the oral cavity to receive an AI-based screening result. This tool is for educational purposes only and does not replace professional diagnosis.</div>', unsafe_allow_html=True)
-
-# --------------------------
-# Image uploader inside white card
-# --------------------------
-st.markdown('<div class="card">', unsafe_allow_html=True)
-uploaded_file = st.file_uploader("Upload an oral cavity image (JPG or PNG)", type=["jpg","jpeg","png"])
-
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
-    
-    if st.button("Analyze Image"):
-        with st.spinner("Analyzing image..."):
-            prediction, confidence = predict(image)
-        if prediction == "Normal":
-            st.markdown(f'<div class="normal"><b>Result:</b> {prediction}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="abnormal"><b>Result:</b> {prediction}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="score">Confidence Score: {confidence*100:.2f}%</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# --------------------------
-# Disclaimer
-# --------------------------
+# ---------------- HEADER ----------------
+st.markdown("<div class='title'>🦷 Oral Cancer AI Detection</div>", unsafe_allow_html=True)
 st.markdown("""
-<div class="disclaimer">
-<b>Disclaimer:</b>
-<ul style="margin-top:4px;">
-<li>This application is a student research project and is not a medical device.</li>
-<li>Results should not be used for diagnosis or treatment decisions.</li>
-</ul>
+<div class='subtitle'>
+Upload an image of the oral cavity to receive an AI-based screening result.<br>
+This tool is for educational purposes only and does not replace professional diagnosis.
+</div>
+""", unsafe_allow_html=True)
+
+# ---------------- MODEL ----------------
+@st.cache_resource
+def load_model():
+    interpreter = tf.lite.Interpreter(
+        model_path="oral_cancer_model_optimized.tflite"
+    )
+    interpreter.allocate_tensors()
+    return interpreter
+
+interpreter = load_model()
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+def preprocess(img):
+    img = img.convert("RGB").resize((224, 224))
+    arr = np.array(img) / 255.0
+    return np.expand_dims(arr, axis=0).astype(np.float32)
+
+# ---------------- UPLOAD + RESULTS CARD ----------------
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+
+st.markdown("### Upload an oral cavity image (JPG or PNG)")
+
+uploaded = st.file_uploader(
+    "",
+    type=["jpg", "jpeg", "png"],
+    label_visibility="collapsed"
+)
+
+if uploaded:
+    image = Image.open(uploaded)
+    st.image(image, use_container_width=True)
+
+    with st.spinner("Analyzing image..."):
+        x = preprocess(image)
+        interpreter.set_tensor(input_details[0]["index"], x)
+        interpreter.invoke()
+        raw_pred = float(interpreter.get_tensor(output_details[0]["index"])[0][0])
+
+    risk_score = int(raw_pred * 100)
+
+    if risk_score >= 71:
+        st.markdown(f"""
+        <div class='abnormal'>
+        <strong>🔴 High Risk Detected</strong><br>
+        The AI detected features associated with possible abnormalities.
+        </div>
+        """, unsafe_allow_html=True)
+    elif risk_score >= 41:
+        st.markdown(f"""
+        <div class='abnormal'>
+        <strong>🟡 Moderate Risk Detected</strong><br>
+        Some irregular features were identified.
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class='normal'>
+        <strong>🟢 Low Risk</strong><br>
+        No significant abnormalities detected.
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown(
+        f"<div class='score'>Risk Score: {risk_score} / 100</div>",
+        unsafe_allow_html=True
+    )
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ---------------- DISCLAIMER ----------------
+st.markdown("""
+<div class='disclaimer'>
+<strong>Disclaimer</strong><br>
+• This application is a student research project and is not a medical device.<br>
+• Results must not be used for diagnosis or treatment decisions.
 </div>
 """, unsafe_allow_html=True)
