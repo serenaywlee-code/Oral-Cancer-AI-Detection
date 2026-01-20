@@ -170,3 +170,77 @@ st.markdown("""
 • Results must not be used for diagnosis or treatment decisions.
 </div>
 """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* Full-screen light blue background */
+html, body, .block-container, .main, .reportview-container {
+    background-color: #dff0fb !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Title */
+.title {
+    font-size: 40px;
+    font-weight: 700;
+    color: #3275a8;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+/* Subtitle */
+.subtitle {
+    text-align: center;
+    font-size: 16px;
+    color: #4a4a4a;
+    margin-bottom: 36px;
+}
+
+/* Main white card for uploader + results only */
+.card {
+    background: white;
+    padding: 36px;
+    border-radius: 26px;
+    box-shadow: 0px 12px 30px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+}
+
+/* Results */
+.normal {
+    background: #f0fdf4;
+    border-left: 6px solid #22c55e;
+    padding: 16px;
+    border-radius: 12px;
+    color: #14532d;
+    margin-top: 16px;
+}
+
+.abnormal {
+    background: #fff7ed;
+    border-left: 6px solid #f59e0b;
+    padding: 16px;
+    border-radius: 12px;
+    color: #7c2d12;
+    margin-top: 16px;
+}
+
+/* Risk score */
+.score {
+    margin-top: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* Disclaimer */
+.disclaimer {
+    background: rgba(254, 202, 202, 0.45);
+    border-left: 6px solid #dc2626;
+    padding: 18px;
+    border-radius: 14px;
+    color: #b91c1c;
+    font-size: 15px;
+    margin-top: 32px;
+}
+</style>
+""", unsafe_allow_html=True)
