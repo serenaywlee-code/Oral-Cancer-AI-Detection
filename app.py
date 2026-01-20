@@ -21,7 +21,7 @@ body, .block-container, .main {
 /* Title */
 .title {
     font-size: 40px;
-    font-weight: 700;
+    font-weight: 500;
     color: #3275a8;
     text-align: center;
     margin-bottom: 5px;
