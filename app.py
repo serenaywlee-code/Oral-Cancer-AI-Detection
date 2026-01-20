@@ -47,7 +47,12 @@ st.markdown("""
     padding-bottom: 40px;
 }
 
-.css-1lcbmhc {padding: 0 !important;} /* remove side padding so background fills full width */
+/* Constrain content width */
+.content {
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
 
 /* Title */
 .title {
@@ -72,9 +77,6 @@ st.markdown("""
     padding: 36px;
     border-radius: 26px;
     box-shadow: 0px 12px 30px rgba(0,0,0,0.08);
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 600px;
 }
 
 /* Results */
@@ -112,9 +114,6 @@ st.markdown("""
     color: #b91c1c;
     font-size: 15px;
     margin-top: 32px;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -122,6 +121,8 @@ st.markdown("""
 # --------------------------
 # Page content
 # --------------------------
+st.markdown('<div class="content">', unsafe_allow_html=True)
+
 st.markdown('<div class="title">🦷 Oral Cancer AI Detection</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Upload an image of the oral cavity to receive an AI-based screening result. This tool is for educational purposes only and does not replace professional diagnosis.</div>', unsafe_allow_html=True)
 
@@ -157,3 +158,5 @@ st.markdown("""
 </ul>
 </div>
 """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
