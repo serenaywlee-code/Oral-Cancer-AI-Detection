@@ -1,64 +1,73 @@
 import streamlit as st
-from PIL import Image
 import numpy as np
+from PIL import Image
 import tensorflow as tf
-import io
+import os
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(
     page_title="Oral Cancer AI Detection",
     page_icon="🦷",
-    layout="centered",
-    initial_sidebar_state="auto"
+    layout="centered"
 )
 
 # ------------------ CUSTOM CSS ------------------
+st.markdown("""
+<style>
+/* Entire app background */
+.stApp {
+    background-color: #d0e7ff;
+}
+
+/* Remove black container */
+.block-container {
+    background-color: transparent !important;
+    padding-top: 2rem;
+}
+
+/* Text styling */
+html, body, [class*="css"]  {
+    font-family: 'Arial', sans-serif;
+    color: #3275a8;
+}
+
+/* Upload card */
+.upload-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 2px dashed #3275a8;
+    margin-top: 1.5rem;
+}
+
+/* Buttons */
+.stButton > button {
+    background-color: #3275a8;
+    color: white;
+    border-radius: 10px;
+    padding: 0.5em 1.5em;
+    border: none;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------ TITLE ------------------
+st.markdown("<h1 style='text-align:center;'>🦷 Oral Cancer AI Detection</h1>", unsafe_allow_html=True)
 st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Gemini&display=swap');
-    
-    body {
-        background-color: #d0e7ff; /* light blue background */
-        color: #3275a8; /* main text color */
-        font-family: 'Gemini', sans-serif;
-    }
-    .stButton>button {
-        background-color: #3275a8;
-        color: white;
-        border-radius: 8px;
-        padding: 0.5em 1.2em;
-    }
-    .stApp {
-        max-width: 700px;
-        margin: auto;
-        padding: 2rem;
-    }
-    h1, h2 {
-        color: #3275a8;
-    }
-    .upload-box {
-        border: 2px dashed #3275a8;
-        padding: 2rem;
-        border-radius: 12px;
-        text-align: center;
-        background-color: white; /* make upload box stand out */
-    }
-    </style>
-    """,
+    "<p style='text-align:center;'>Upload a mouth image and let the AI analyze it.</p>",
     unsafe_allow_html=True
 )
 
-# ------------------ HEADER ------------------
-st.title("🦷 Oral Cancer AI Detection")
-st.markdown("Upload a mouth image below and our AI will indicate if there may be signs of oral cancer.")
-st.markdown("**Note:** This is not an official diagnosis. Please consult a dentist or doctor for medical advice.")
-
-# ------------------ MODEL LOADING ------------------
-@st.cache_resource(show_spinner=True)
+# ------------------ LOAD MODEL ------------------
+@st.cache_resource
 def load_model():
-    # Load TFLite model using TensorFlow Lite interpreter (works without tflite_runtime)
-    interpreter = tf.lite.Interpreter(model_path="oral_cancer_model.tflite")
+    model_path = "oral_cancer_model.tflite"
+
+    if not os.path.exists(model_path):
+        st.error("❌ Model file not found. Make sure `oral_cancer_model.tflite` is uploaded.")
+        st.stop()
+
+    interpreter = tf.lite.Interpreter(model_path=model_path)
     interpreter.allocate_tensors()
     return interpreter
 
@@ -66,30 +75,41 @@ interpreter = load_model()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# ------------------ IMAGE UPLOAD ------------------
-uploaded_file = st.file_uploader("Choose a mouth image...", type=["jpg", "jpeg", "png"])
+# ------------------ UPLOAD AREA ------------------
+st.markdown("<div class='upload-card'>", unsafe_allow_html=True)
 
-if uploaded_file is not None:
+uploaded_file = st.file_uploader(
+    "Upload a mouth image",
+    type=["jpg", "jpeg", "png"]
+)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ------------------ PREDICTION ------------------
+if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_column_width=True)
-    
-    # Preprocess image for TFLite model
-    img_resized = image.resize((224, 224))  # adjust to your model input size
-    img_array = np.array(img_resized, dtype=np.float32) / 255.0
+
+    # Preprocess
+    img = image.resize((224, 224))
+    img_array = np.array(img, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
     # Run inference
     interpreter.set_tensor(input_details[0]['index'], img_array)
     interpreter.invoke()
-    output_data = interpreter.get_tensor(output_details[0]['index'])
-    prediction = np.argmax(output_data)
+    output = interpreter.get_tensor(output_details[0]['index'])
 
-    # Display result
+    prediction = np.argmax(output)
+
     if prediction == 1:
-        st.error("⚠️ The AI indicates this image may show signs of oral cancer.")
+        st.error("⚠️ Possible signs of oral cancer detected.")
     else:
-        st.success("✅ The AI indicates this image appears normal.")
+        st.success("✅ No signs of oral cancer detected.")
 
-# ------------------ FOOTER ------------------
+# ------------------ DISCLAIMER ------------------
 st.markdown("---")
-st.markdown("Created with ❤️ using Streamlit and TensorFlow Lite")
+st.markdown(
+    "<small>This tool is for educational purposes only and is not a medical diagnosis.</small>",
+    unsafe_allow_html=True
+)
