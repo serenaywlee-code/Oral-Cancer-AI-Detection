@@ -13,12 +13,9 @@ st.set_page_config(
 # ---------------- STYLES ----------------
 st.markdown("""
 <style>
-html, body, .main {
+/* Page background */
+body, .block-container, .main {
     background-color: #dff0fb !important;  /* Light blue background */
-}
-
-.block-container {
-    padding-top: 2rem;
 }
 
 /* Title */
@@ -38,7 +35,7 @@ html, body, .main {
     margin-bottom: 36px;
 }
 
-/* Main white card for upload + results ONLY */
+/* Main white card for uploader + results only */
 .card {
     background: white;
     padding: 36px;
