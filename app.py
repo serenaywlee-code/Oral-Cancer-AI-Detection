@@ -10,12 +10,15 @@ st.set_page_config(
     layout="centered"
 )
 
-# ---------------- STYLING ----------------
+# ---------------- STYLES ----------------
 st.markdown("""
 <style>
-/* Entire page background */
 html, body, .main {
-    background-color: #e6f2fb;
+    background-color: #dff0fb !important;
+}
+
+.block-container {
+    padding-top: 2rem;
 }
 
 /* Title */
@@ -32,33 +35,41 @@ html, body, .main {
     text-align: center;
     font-size: 16px;
     color: #4a4a4a;
-    margin-bottom: 30px;
+    margin-bottom: 36px;
 }
 
-/* White card */
+/* Main white card */
 .card {
     background: white;
-    padding: 32px;
-    border-radius: 22px;
-    box-shadow: 0px 8px 22px rgba(0,0,0,0.08);
+    padding: 36px;
+    border-radius: 26px;
+    box-shadow: 0px 12px 30px rgba(0,0,0,0.08);
 }
 
-/* Normal result */
-.result-normal {
+/* Results */
+.normal {
     background: #f0fdf4;
     border-left: 6px solid #22c55e;
-    padding: 18px;
+    padding: 16px;
     border-radius: 12px;
     color: #14532d;
+    margin-top: 16px;
 }
 
-/* Abnormal result */
-.result-abnormal {
+.abnormal {
     background: #fff7ed;
     border-left: 6px solid #f59e0b;
-    padding: 18px;
+    padding: 16px;
     border-radius: 12px;
     color: #7c2d12;
+    margin-top: 16px;
+}
+
+/* Risk score */
+.score {
+    margin-top: 14px;
+    font-weight: 600;
+    color: #374151;
 }
 
 /* Disclaimer */
@@ -67,9 +78,9 @@ html, body, .main {
     border-left: 6px solid #dc2626;
     padding: 18px;
     border-radius: 14px;
-    margin-top: 28px;
     color: #b91c1c;
     font-size: 15px;
+    margin-top: 32px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -83,7 +94,7 @@ This tool is for educational purposes only and does not replace professional dia
 </div>
 """, unsafe_allow_html=True)
 
-# ---------------- MODEL LOADING ----------------
+# ---------------- MODEL ----------------
 @st.cache_resource
 def load_model():
     interpreter = tf.lite.Interpreter(
@@ -96,51 +107,60 @@ interpreter = load_model()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# ---------------- IMAGE PREPROCESS ----------------
-def preprocess_image(image):
-    image = image.convert("RGB")
-    image = image.resize((224, 224))
-    img = np.array(image) / 255.0
-    img = np.expand_dims(img, axis=0).astype(np.float32)
-    return img
+def preprocess(img):
+    img = img.convert("RGB").resize((224, 224))
+    arr = np.array(img) / 255.0
+    return np.expand_dims(arr, axis=0).astype(np.float32)
 
-# ---------------- UPLOAD CARD ----------------
+# ---------------- MAIN CARD (ONLY ONE) ----------------
 st.markdown("<div class='card'>", unsafe_allow_html=True)
-st.markdown("### Upload an oral cavity image (JPG or PNG)", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader(
+st.markdown("### Upload an oral cavity image (JPG or PNG)")
+
+uploaded = st.file_uploader(
     "",
     type=["jpg", "jpeg", "png"],
     label_visibility="collapsed"
 )
 
-if uploaded_file:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded image", use_container_width=True)
+if uploaded:
+    image = Image.open(uploaded)
+    st.image(image, use_container_width=True)
 
     with st.spinner("Analyzing image..."):
-        processed = preprocess_image(image)
-        interpreter.set_tensor(input_details[0]["index"], processed)
+        x = preprocess(image)
+        interpreter.set_tensor(input_details[0]["index"], x)
         interpreter.invoke()
-        output = interpreter.get_tensor(output_details[0]["index"])
-        prediction = float(output[0][0])
+        raw_pred = float(interpreter.get_tensor(output_details[0]["index"])[0][0])
 
-    if prediction > 0.5:
-        st.markdown("""
-        <div class='result-abnormal'>
-        <h4>⚠️ Abnormality Detected</h4>
-        The AI has detected potential abnormalities. Please consult a healthcare professional immediately.
+    risk_score = int(raw_pred * 100)
+
+    if risk_score >= 71:
+        st.markdown(f"""
+        <div class='abnormal'>
+        <strong>🔴 High Risk Detected</strong><br>
+        The AI detected features associated with possible abnormalities.
+        </div>
+        """, unsafe_allow_html=True)
+    elif risk_score >= 41:
+        st.markdown(f"""
+        <div class='abnormal'>
+        <strong>🟡 Moderate Risk Detected</strong><br>
+        Some irregular features were identified.
         </div>
         """, unsafe_allow_html=True)
     else:
-        st.markdown("""
-        <div class='result-normal'>
-        <h4>✅ Normal Result</h4>
-        No abnormalities detected. Please consult a professional for confirmation.
+        st.markdown(f"""
+        <div class='normal'>
+        <strong>🟢 Low Risk</strong><br>
+        No significant abnormalities detected.
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown(f"**Confidence score:** `{prediction:.2f}`")
+    st.markdown(
+        f"<div class='score'>Risk Score: {risk_score} / 100</div>",
+        unsafe_allow_html=True
+    )
 
 st.markdown("</div>", unsafe_allow_html=True)
 
