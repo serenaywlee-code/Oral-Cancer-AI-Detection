@@ -78,7 +78,10 @@ body, .block-container, .main {
 st.markdown("<div class='title'>🦷 Oral Cancer AI Detection</div>", unsafe_allow_html=True)
 st.markdown("""
 <div class='subtitle'>
-Upload an image of the oral cavity to receive an AI-based screening result.<br>
+st.markdown(
+    "<h3 style='color:#3275a8;'>Upload an oral cavity image (JPG or PNG)</h3>",
+    unsafe_allow_html=True
+)
 This tool is for educational purposes only and does not replace professional diagnosis.
 </div>
 
