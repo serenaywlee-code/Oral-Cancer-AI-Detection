@@ -106,10 +106,9 @@ def preprocess(img):
 st.markdown("<div class='card'>", unsafe_allow_html=True)
 
 st.markdown(
-    "<h3 style='color#555555;'>Upload an oral cavity image (JPG or PNG)</h3>",
+    "<h3 style='color:#3275a8; font-weight:600;'>Upload an oral cavity image (JPG or PNG)</h3>",
     unsafe_allow_html=True
 )
-
 
 uploaded = st.file_uploader(
     "",
